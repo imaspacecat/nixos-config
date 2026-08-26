@@ -7,7 +7,7 @@
 
   programs.vscode = {
     enable = true;
-    mutableExtensionsDir = false; 
+    mutableExtensionsDir = false;
 
     profiles.default = {
       extensions =
@@ -16,6 +16,7 @@
           ms-python.vscode-pylance
           ms-python.python
           ms-python.debugpy
+          ritwickdey.liveserver
         ])
         ++ pkgs.vscode-utils.extensionsFromVscodeMarketplace [
           {

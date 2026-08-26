@@ -7,8 +7,14 @@
       i3Support = true;
       pulseSupport = true;
     };
+
     script = "polybar top &";
+
     config = {
+      "settings" = {
+        "screenchange-reload" = true;
+      };
+
       "bar/top" = {
         width = "100%";
         height = "20px";
@@ -96,4 +102,6 @@
       };
     };
   };
+
+  systemd.user.services.polybar.Install.WantedBy = [ "i3-session.target" ];
 }
