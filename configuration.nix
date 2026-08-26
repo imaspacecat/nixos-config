@@ -3,6 +3,7 @@
 {
   imports = [
     ./hardware-configuration.nix
+    ./module/system
   ];
 
   boot.loader.systemd-boot.enable = true;
@@ -34,32 +35,11 @@
     variant = "";
   };
 
-  services.pulseaudio.enable = false;
-  security.rtkit.enable = true;
-  services.pipewire = {
-    enable = true;
-    alsa.enable = true;
-    alsa.support32Bit = true;
-    pulse.enable = true;
-  };
-
-  users.users.spacecat = {
-    isNormalUser = true;
-    description = "Yotam Dubiner";
-    extraGroups = [
-      "networkmanager"
-      "wheel"
-      "audio"
-    ];
-  };
-
   nixpkgs.config.allowUnfree = true;
   nix.settings.experimental-features = [
     "nix-command"
     "flakes"
   ];
-
-  home-manager.backupFileExtension = "backup";
 
   fonts.packages = with pkgs; [
     jetbrains-mono
@@ -75,8 +55,6 @@
   ];
 
   services.envfs.enable = true;
-
-  programs.firefox.enable = true;
 
   xdg.mime.defaultApplications = {
     "text/html" = "firefox.desktop";

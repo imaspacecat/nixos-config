@@ -2,9 +2,7 @@
 
 {
   imports = [
-    ./module/home/dev
-    ./module/home/app
-    ./module/home/desktop
+    ./module/home
   ];
 
   home.username = "spacecat";
