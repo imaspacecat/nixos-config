@@ -3,8 +3,26 @@
 {
   programs.firefox = {
     enable = true;
+
+    policies = {
+      ExtensionSettings = {
+        # AMOLED Black Theme
+        "{bc16b6e3-4935-42b3-bff7-b65b49434857}" = {
+          installation_mode = "force_installed";
+          install_url = "https://addons.mozilla.org/firefox/downloads/latest/amoled-black/latest.xpi";
+        };
+        # uBlock Origin
+        "uBlock0@raymondhill.net" = {
+          installation_mode = "force_installed";
+          install_url = "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi";
+        };
+      };
+    };
+
     profiles.default = {
       settings = {
+        "extensions.autoDisableScopes" = 0;
+
         "sidebar.revamp" = true;
         "sidebar.verticalTabs" = true;
         "browser.tabs.insertAfterCurrent" = true;

@@ -6,7 +6,6 @@
 }:
 
 {
-  # Modern NixOS libinput location
   services.libinput = {
     enable = true;
 
