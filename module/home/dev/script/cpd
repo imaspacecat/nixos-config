@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+recursive=false
+while getopts "r" opt; do
+  case "$opt" in
+    r) recursive=true ;;
+    *) echo "Usage: cpd [-r] [files/directories...]"; exit 1 ;;
+  esac
+done
+shift $((OPTIND - 1))
+
+if [ $# -eq 0 ]; then
+  find . -maxdepth 1 -type f -exec tail -n +1 {} + | xclip -selection clipboard
+else
+  for arg in "$@"; do
+    if [ -d "$arg" ]; then
+      if [ "$recursive" = true ]; then
+        find "$arg" -type f -exec tail -n +1 {} +
+      else
+        find "$arg" -maxdepth 1 -type f -exec tail -n +1 {} +
+      fi
+    else
+      tail -n +1 "$arg"
+    fi
+  done | xclip -selection clipboard
+fi
