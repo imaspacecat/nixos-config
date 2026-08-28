@@ -5,6 +5,12 @@
     enable = true;
 
     policies = {
+      Preferences = {
+        "security.enterprise_roots.enabled" = true;
+        # "network.proxy.type" = 0;
+        # "network.dns.disableIPv6" = true;
+      };
+
       ExtensionSettings = {
         # AMOLED Black Theme
         "{bc16b6e3-4935-42b3-bff7-b65b49434857}" = {
@@ -15,6 +21,11 @@
         "uBlock0@raymondhill.net" = {
           installation_mode = "force_installed";
           install_url = "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi";
+        };
+        # FuzzyTabs
+        "{08ed11c3-efeb-4275-8887-5b1fc9dfc183}" = {
+          installation_mode = "force_installed";
+          install_url = "https://addons.mozilla.org/firefox/downloads/latest/terrakok-fuzzytabs/latest.xpi";
         };
       };
     };
@@ -34,21 +45,21 @@
         "browser.newtabpage.activity-stream.feeds.section.highlights" = false;
         "browser.newtabpage.activity-stream.feeds.snippets" = false;
 
-        "browser.contentblocking.category" = "standard";
-        "gfx.font_rendering.cleartype_params.rendering_mode" = 5;
-        "gfx.font_rendering.cleartype_params.cleartype_level" = 100;
-        "gfx.font_rendering.directwrite.use_gdi_table_loading" = false;
-        "permissions.default.geo" = 0;
+        # "browser.contentblocking.category" = "standard";
+        # "gfx.font_rendering.cleartype_params.rendering_mode" = 5;
+        # "gfx.font_rendering.cleartype_params.cleartype_level" = 100;
+        # "gfx.font_rendering.directwrite.use_gdi_table_loading" = false;
+        # "permissions.default.geo" = 0;
 
-        "gfx.content.skia-font-cache-size" = 20;
-        "content.notify.interval" = 100000;
+        # "gfx.content.skia-font-cache-size" = 20;
+        # "content.notify.interval" = 100000;
 
-        "general.smoothScroll" = true;
-        "mousewheel.default.delta_multiplier_y" = 250;
+        # "general.smoothScroll" = true;
+        # "mousewheel.default.delta_multiplier_y" = 250;
 
-        "full-screen-api.transition-duration.enter" = "0 0";
-        "full-screen-api.transition-duration.leave" = "0 0";
-        "browser.fullscreen.autohide" = false;
+        # "full-screen-api.transition-duration.enter" = "0 0";
+        # "full-screen-api.transition-duration.leave" = "0 0";
+        # "browser.fullscreen.autohide" = false;
       };
     };
   };

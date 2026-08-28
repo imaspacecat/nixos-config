@@ -3,7 +3,7 @@
 {
   imports = [
     ./hardware-configuration.nix
-    ./module/system
+    ../../module
   ];
 
   boot.loader.systemd-boot.enable = true;

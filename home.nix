@@ -1,10 +1,6 @@
 { config, pkgs, ... }:
 
 {
-  imports = [
-    ./module/home
-  ];
-
   home.username = "spacecat";
   home.homeDirectory = "/home/spacecat";
 
@@ -17,6 +13,7 @@
     keepassxc
     brightnessctl
     tree
+    discord-ptb
   ];
 
   home.stateVersion = "26.05";

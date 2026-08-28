@@ -1,7 +1,0 @@
-{
-  imports = [
-    ./app
-    ./desktop
-    ./dev
-  ];
-}

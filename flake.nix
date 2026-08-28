@@ -25,10 +25,10 @@
     }@inputs:
     {
       nixosConfigurations = {
-        nixos = nixpkgs.lib.nixosSystem {
+        loaner = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
           modules = [
-            ./configuration.nix
+            ./host/loaner/configuration.nix
 
             sops-nix.nixosModules.sops
 
@@ -36,6 +36,7 @@
             {
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
+
               home-manager.users.spacecat = import ./home.nix;
             }
           ];

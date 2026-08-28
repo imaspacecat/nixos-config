@@ -19,7 +19,7 @@ in
     enable = true;
     shellAliases = {
       ll = "ls -la";
-      update = "sudo nixos-rebuild switch --flake ~/nixos/#nixos";
+      update = "sudo nixos-rebuild switch --flake .#loaner";
       screenshot = "maim -s | xclip -selection clipboard -t image/png";
       fv = "vim \$(fzf)";
       cpd = "cpd";
