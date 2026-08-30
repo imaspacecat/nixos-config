@@ -6,19 +6,16 @@
 }:
 
 let
-  # Move to the absolute lowest empty workspace (Your original correct behavior)
   moveNewWs = pkgs.writeShellScript "i3-move-new-ws" ''
     ws=$(i3-msg -t get_workspaces | ${pkgs.jq}/bin/jq '[.[] | select(.num != -1).num] as $ws | (range(1; 20) | select(. as $n | ($ws | contains([$n]) | not)))' | head -n1)
     i3-msg "move container to workspace $ws; workspace $ws"
   '';
 
-  # Move window to the NEXT existing workspace in order
   moveNextWs = pkgs.writeShellScript "i3-move-next-ws" ''
     workspaces=$(i3-msg -t get_workspaces | ${pkgs.jq}/bin/jq -c '[.[] | select(.num != -1)] | sort_by(.num)')
     current=$(echo "$workspaces" | ${pkgs.jq}/bin/jq '.[] | select(.focused == true).num')
     next=$(echo "$workspaces" | ${pkgs.jq}/bin/jq --argjson cur "$current" '[.[] | select(.num > $cur).num] | first')
 
-    # If there is no higher workspace, wrap around to the first existing one
     if [ "$next" = "null" ] || [ -z "$next" ]; then
       next=$(echo "$workspaces" | ${pkgs.jq}/bin/jq '.[0].num')
     fi
@@ -26,13 +23,11 @@ let
     i3-msg "move container to workspace $next; workspace $next"
   '';
 
-  # Move window to the PREVIOUS existing workspace in order
   movePrevWs = pkgs.writeShellScript "i3-move-prev-ws" ''
     workspaces=$(i3-msg -t get_workspaces | ${pkgs.jq}/bin/jq -c '[.[] | select(.num != -1)] | sort_by(.num)')
     current=$(echo "$workspaces" | ${pkgs.jq}/bin/jq '.[] | select(.focused == true).num')
     prev=$(echo "$workspaces" | ${pkgs.jq}/bin/jq --argjson cur "$current" '[.[] | select(.num < $cur).num] | last')
 
-    # If there is no lower workspace, wrap around to the last existing one
     if [ "$prev" = "null" ] || [ -z "$prev" ]; then
       prev=$(echo "$workspaces" | ${pkgs.jq}/bin/jq '.[-1].num')
     fi
@@ -46,6 +41,14 @@ in
     config = {
       terminal = "alacritty";
       modifier = "Mod4";
+
+      startup = [
+        {
+          command = "systemctl --user restart polybar.service";
+          always = true;
+          notification = false;
+        }
+      ];
 
       keybindings =
         let

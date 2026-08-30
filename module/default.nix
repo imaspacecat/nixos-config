@@ -16,6 +16,7 @@
       ./home/app/alacritty.nix
       ./home/app/firefox.nix
       ./home/app/obsidian.nix
+      ./home/app/zen.nix
 
       ./home/desktop/dunst.nix
       ./home/desktop/i3.nix
