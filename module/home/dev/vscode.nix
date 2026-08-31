@@ -17,6 +17,7 @@
           ms-python.python
           ms-python.debugpy
           ritwickdey.liveserver
+          mshr-h.veriloghdl
         ])
         ++ pkgs.vscode-utils.extensionsFromVscodeMarketplace [
           {

@@ -7,6 +7,7 @@
     ./system/network.nix
     ./system/sops.nix
     ./system/user.nix
+    ./system/udev.nix
   ];
 
   home-manager.users.spacecat = {
@@ -17,6 +18,7 @@
       ./home/app/firefox.nix
       ./home/app/obsidian.nix
       ./home/app/zen.nix
+      ./home/app/quartus.nix
 
       ./home/desktop/dunst.nix
       ./home/desktop/i3.nix
@@ -30,6 +32,7 @@
       ./home/dev/python.nix
       ./home/dev/ssh.nix
       ./home/dev/vscode.nix
+      ./home/dev/codex.nix
     ];
   };
 }

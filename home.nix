@@ -3,7 +3,7 @@
 {
   home.username = "spacecat";
   home.homeDirectory = "/home/spacecat";
-
+  # move to base.nix
   home.packages = with pkgs; [
     fastfetch
     btop
@@ -14,6 +14,7 @@
     brightnessctl
     tree
     discord-ptb
+    usbutils
   ];
 
   home.stateVersion = "26.05";
