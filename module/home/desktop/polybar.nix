@@ -1,6 +1,75 @@
 { config, pkgs, ... }:
 
+let
+  codexbar = pkgs.writeShellScriptBin "codexbar" ''
+    # Codex writes token and rate-limit snapshots to its local session JSONL.
+    codex_home="$CODEX_HOME"
+    if [ -z "$codex_home" ]; then
+      codex_home="$HOME/.codex"
+    fi
+
+    session_dir="$codex_home/sessions"
+    if [ ! -d "$session_dir" ]; then
+      echo "CODEX --"
+      exit 0
+    fi
+
+    session_file=$(
+      ${pkgs.findutils}/bin/find "$session_dir" -type f -name '*.jsonl' -printf '%T@ %p\n' 2>/dev/null \
+        | ${pkgs.coreutils}/bin/sort -nr \
+        | ${pkgs.coreutils}/bin/cut -d' ' -f2- \
+        | ${pkgs.coreutils}/bin/head -n1
+    )
+
+    if [ -z "$session_file" ]; then
+      echo "CODEX --"
+      exit 0
+    fi
+
+    snapshot=$(
+      ${pkgs.coreutils}/bin/tail -n 500 "$session_file" \
+        | ${pkgs.jq}/bin/jq -r '
+          select(.type == "event_msg" and .payload.type == "token_count")
+          | [.payload.info.last_token_usage.total_tokens,
+             .payload.info.model_context_window,
+             .payload.rate_limits.primary.used_percent,
+             .payload.rate_limits.secondary.used_percent]
+          | @tsv' \
+        | ${pkgs.coreutils}/bin/tail -n1
+    )
+
+    if [ -z "$snapshot" ]; then
+      echo "CODEX --"
+      exit 0
+    fi
+
+    IFS=$'\t' read -r tokens context five_hour seven_day <<EOF
+    $snapshot
+    EOF
+
+    if [ "''${context:-0}" -gt 0 ] 2>/dev/null; then
+      context_pct=$((tokens * 100 / context))
+    else
+      context_pct=0
+    fi
+
+    if [ "''${tokens:-0}" -ge 1000 ] 2>/dev/null; then
+      tokens_display="$((tokens / 1000))k"
+    else
+      tokens_display="''${tokens:-0}"
+    fi
+
+    printf 'CODEX CTX %s%% (%s) | PLAN 5h %.0f%% / 7d %.0f%%\n' \
+      "$context_pct" "$tokens_display" "''${five_hour:-0}" "''${seven_day:-0}"
+  '';
+in
+
 {
+  home.packages = [
+    codexbar
+    pkgs.networkmanagerapplet
+  ];
+
   services.polybar = {
     enable = true;
     package = pkgs.polybar.override {
@@ -8,7 +77,7 @@
       pulseSupport = true;
     };
 
-    script = "polybar top &";
+    script = "nm-applet --indicator & polybar top &";
 
     config = {
       "settings" = {
@@ -22,12 +91,15 @@
         fixed-center = true;
         background = "#222222";
         foreground = "#ffffff";
+        font-0 = "JetBrainsMono Nerd Font:size=10;2";
         line-size = 2;
         padding-left = 0;
         padding-right = 2;
         module-margin = 1;
+        tray-position = "right";
+        tray-padding = 2;
         modules-left = "i3";
-        modules-right = "cpu memory backlight pulseaudio wlan battery date";
+        modules-right = "cpu memory backlight pulseaudio wlan battery codexbar date";
       };
 
       "module/i3" = {
@@ -46,37 +118,37 @@
       "module/cpu" = {
         type = "internal/cpu";
         interval = 2;
-        format = "CPU <label>";
+        format = "󰍛 <label>";
         label = "%percentage%%";
       };
 
       "module/memory" = {
         type = "internal/memory";
         interval = 2;
-        format = "RAM <label>";
+        format = "󰘚 <label>";
         label = "%percentage_used%%";
       };
 
       "module/backlight" = {
         type = "internal/backlight";
         card = "intel_backlight";
-        format = "BRI <label>";
+        format = "󰃠 <label>";
         label = "%percentage%%";
       };
 
       "module/pulseaudio" = {
         type = "internal/alsa";
-        format-volume = "VOL <label-volume>";
+        format-volume = "󰕾 <label-volume>";
         label-volume = "%percentage%%";
-        label-muted = "MUTED";
+        label-muted = "󰖁 muted";
       };
 
       "module/wlan" = {
         type = "internal/network";
         interface-type = "wireless";
         interval = 5;
-        format-connected = "WIFI <label-connected>";
-        format-disconnected = "WIFI disconnected";
+        format-connected = "󰖩 <label-connected>";
+        format-disconnected = "󰖪 disconnected";
         label-connected = "%essid%";
       };
 
@@ -85,12 +157,19 @@
         battery = "BAT0";
         adapter = "AC";
         poll-interval = 5;
-        format-charging = "CHR <label-charging>";
-        format-discharging = "BAT <label-discharging>";
-        format-full = "BAT <label-full>";
+        format-charging = "󰂄 <label-charging>";
+        format-discharging = "󰁹 <label-discharging>";
+        format-full = "󰁹 <label-full>";
         label-charging = "%percentage%%";
         label-discharging = "%percentage%%";
         label-full = "100%";
+      };
+
+      "module/codexbar" = {
+        type = "custom/script";
+        exec = "${codexbar}/bin/codexbar";
+        interval = 10;
+        format = "<label>";
       };
 
       "module/date" = {

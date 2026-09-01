@@ -2,6 +2,6 @@
 
 {
   home.packages = with pkgs; [
-    inputs.llm-agents.packages.${pkgs.system}.codex
+    inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.codex
   ];
 }
