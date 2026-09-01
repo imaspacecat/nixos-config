@@ -77,7 +77,7 @@ in
       pulseSupport = true;
     };
 
-    script = "nm-applet --indicator & polybar top &";
+    script = "${pkgs.networkmanagerapplet}/bin/nm-applet --indicator & polybar top &";
 
     config = {
       "settings" = {
