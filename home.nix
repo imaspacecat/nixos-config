@@ -1,9 +1,8 @@
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   home.username = "spacecat";
   home.homeDirectory = "/home/spacecat";
-  # move to base.nix
   home.packages = with pkgs; [
     fastfetch
     btop
@@ -15,6 +14,7 @@
     tree
     discord-ptb
     usbutils
+    rofi
   ];
 
   home.stateVersion = "26.05";

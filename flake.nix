@@ -1,13 +1,6 @@
 {
   description = "Standard NixOS System Flake Configuration";
 
-  nixConfig = {
-    extra-substituters = [ "https://cache.numtide.com" ];
-    extra-trusted-public-keys = [
-      "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
-    ];
-  };
-
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
 
@@ -24,6 +17,7 @@
     zen-browser = {
       url = "github:0xc000022070/zen-browser-flake";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
     };
 
     helium-browser = {
@@ -38,12 +32,9 @@
 
   outputs =
     {
-      self,
       nixpkgs,
       sops-nix,
       home-manager,
-      zen-browser,
-      llm-agents,
       ...
     }@inputs:
     {
@@ -61,8 +52,6 @@
               home-manager.useUserPackages = true;
 
               home-manager.extraSpecialArgs = { inherit inputs; };
-
-              home-manager.users.spacecat = import ./home.nix;
             }
           ];
         };

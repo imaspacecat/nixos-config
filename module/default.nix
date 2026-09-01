@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ ... }:
 
 {
   imports = [
@@ -15,6 +15,7 @@
       ../home.nix
 
       ./home/app/alacritty.nix
+      ./home/app/browser-extensions.nix
       ./home/app/firefox.nix
       ./home/app/helium.nix
       ./home/app/obsidian.nix

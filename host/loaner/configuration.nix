@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   imports = [
@@ -58,8 +58,6 @@
     vim
     wget
     curl
-    rofi
-    alacritty
   ];
 
   services.envfs.enable = true;
