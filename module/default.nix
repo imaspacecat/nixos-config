@@ -26,6 +26,9 @@
       ./home/desktop/i3.nix
       ./home/desktop/picom.nix
       ./home/desktop/polybar.nix
+      ./home/desktop/rofi.nix
+
+      ./home/reminders.nix
 
       ./home/dev/bash.nix
       ./home/dev/fzf.nix

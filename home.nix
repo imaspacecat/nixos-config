@@ -12,9 +12,11 @@
     keepassxc
     brightnessctl
     tree
+    ripgrep
+    fd
+    file
     discord-ptb
     usbutils
-    rofi
   ];
 
   home.stateVersion = "26.05";

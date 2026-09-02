@@ -37,6 +37,7 @@
         "browser.sessionstore.restore_on_demand" = true;
         "browser.sessionstore.restore_pinned_tabs_on_demand" = true;
         "browser.newtab.preload" = false;
+        "browser.tabs.insertAfterCurrent" = true;
         "network.prefetch-next" = false;
         "network.dns.disablePrefetch" = true;
         "network.predictor.enabled" = false;

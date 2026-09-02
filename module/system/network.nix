@@ -30,6 +30,22 @@
           ignore-auto-dns = "true";
         };
       };
+
+      apartment = {
+        connection = {
+          id = "Wi-Fi connection 1";
+          uuid = "7fe9defb-745a-40a6-ab7a-123df5bd1caa";
+          type = "wifi";
+          autoconnect = "true";
+        };
+        wifi = {
+          mode = "infrastructure";
+          ssid = "508CLRK-U411";
+        };
+        ipv6 = {
+          method = "disabled";
+        };
+      };
     };
   };
 

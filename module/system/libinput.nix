@@ -6,12 +6,12 @@
 
     mouse = {
       accelProfile = "flat";
-      accelSpeed = "0.4";
+      accelSpeed = "0.6";
     };
 
     touchpad = {
       accelProfile = "flat";
-      accelSpeed = "0.4";
+      accelSpeed = "0.6";
 
       naturalScrolling = true;
       tapping = true;

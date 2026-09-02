@@ -1,0 +1,107 @@
+import datetime
+import hashlib
+import json
+import os
+import pathlib
+import subprocess
+import sys
+
+reminder_file = pathlib.Path(
+    os.environ.get("REMINDERS_FILE", pathlib.Path.home() / ".config/reminders/reminders.json")
+)
+state_dir = pathlib.Path(
+    os.environ.get("REMINDERS_STATE_DIR", pathlib.Path.home() / ".local/state/reminders")
+)
+weekdays = {
+    "mon": 0,
+    "monday": 0,
+    "tue": 1,
+    "tuesday": 1,
+    "wed": 2,
+    "wednesday": 2,
+    "thu": 3,
+    "thursday": 3,
+    "fri": 4,
+    "friday": 4,
+    "sat": 5,
+    "saturday": 5,
+    "sun": 6,
+    "sunday": 6,
+}
+
+
+def due(reminder, now):
+    frequency = reminder["frequency"]
+    today = now.date()
+    days = reminder.get("days", [])
+
+    if frequency == "daily":
+        return True
+    if frequency == "weekdays":
+        return today.weekday() < 5
+    if frequency == "weekly":
+        return today.weekday() in {weekdays[day.lower()] for day in days}
+    if frequency == "monthly":
+        return today.day in {int(day) for day in days}
+    if frequency == "once":
+        return today == datetime.date.fromisoformat(reminder["date"])
+    if frequency == "interval":
+        start = datetime.datetime.combine(
+            datetime.date.fromisoformat(reminder["date"]),
+            datetime.time.fromisoformat(reminder["time"]),
+            tzinfo=now.tzinfo,
+        )
+        elapsed = now.replace(second=0, microsecond=0) - start
+        return elapsed.total_seconds() >= 0 and elapsed.total_seconds() % (reminder["interval_minutes"] * 60) == 0
+    raise ValueError(f"unknown frequency: {frequency}")
+
+
+if not reminder_file.exists():
+    sys.exit(0)
+
+try:
+    with reminder_file.open(encoding="utf-8") as source:
+        reminders = json.load(source)["reminders"]
+except (json.JSONDecodeError, KeyError, TypeError) as error:
+    print(f"reminders: invalid JSON: {error}", file=sys.stderr)
+    sys.exit(1)
+
+now = datetime.datetime.now().astimezone()
+
+for number, reminder in enumerate(reminders, start=1):
+    if not reminder.get("enabled", True):
+        continue
+    try:
+        time = datetime.time.fromisoformat(reminder["time"])
+        if reminder["frequency"] != "interval" and (now.hour, now.minute) != (time.hour, time.minute):
+            continue
+        if not due(reminder, now):
+            continue
+        urgency = reminder.get("urgency", "normal")
+        timeout = reminder.get("timeout_seconds", 300)
+        if urgency not in {"low", "normal", "critical"} or timeout < 0:
+            raise ValueError("invalid notification settings")
+    except (KeyError, TypeError, ValueError) as error:
+        print(f"reminders: entry {number}: {error}", file=sys.stderr)
+        continue
+
+    identity = json.dumps(reminder, sort_keys=True)
+    state_file = state_dir / f"{hashlib.sha256(identity.encode()).hexdigest()}-{now:%Y-%m-%d-%H:%M}"
+    if state_file.exists():
+        continue
+
+    result = subprocess.run(
+        [
+            "notify-send",
+            "-u",
+            urgency,
+            "-t",
+            str(timeout * 1000),
+            reminder["title"],
+            reminder.get("description", ""),
+        ],
+        check=False,
+    )
+    if result.returncode == 0:
+        state_dir.mkdir(parents=True, exist_ok=True)
+        state_file.touch()

@@ -26,6 +26,12 @@
             version = "0.2.2";
             sha256 = "sha256-s306AHMkUFPaG7ISIr0RscK/k6OVtniIG1CQprBx+cY=";
           }
+          {
+            name = "rainbow-csv";
+            publisher = "mechatroner";
+            version = "3.24.1";
+            sha256 = "sha256-xZpK6pJNXnxudauzJihEi9VASRXi89+hn7vfF33qRgY=";
+          }
         ];
 
       userSettings = {

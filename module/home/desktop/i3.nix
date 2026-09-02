@@ -103,8 +103,8 @@ in
           "${mod}+Shift+k" = "move up";
           "${mod}+Shift+l" = "move right";
 
-          "${mod}+v" = "split v";
-          "${mod}+b" = "split h";
+          "${mod}+x" = "split h";
+          "${mod}+z" = "split v";
           "${mod}+f" = "fullscreen toggle";
 
           "${mod}+s" = "layout stacking";
@@ -144,5 +144,9 @@ in
 
       bars = [ ];
     };
+
+    extraConfig = ''
+      for_window [class="discord"] move scratchpad; scratchpad show
+    '';
   };
 }
