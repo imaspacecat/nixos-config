@@ -19,6 +19,7 @@
       ./home/app/firefox.nix
       ./home/app/helium.nix
       ./home/app/obsidian.nix
+      ./home/app/urxvt.nix
       ./home/app/zen.nix
       ./home/app/quartus.nix
 
@@ -38,6 +39,7 @@
       ./home/dev/ssh.nix
       ./home/dev/vscode.nix
       ./home/dev/codex.nix
+      ./home/dev/yazi.nix
     ];
   };
 }

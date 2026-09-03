@@ -90,6 +90,7 @@ in
         in
         lib.mkOptionDefault {
           "${mod}+t" = "exec alacritty";
+          "${mod}+c" = "exec urxvt -name yazi -e yazi";
           "${mod}+d" = "exec rofi -show drun";
           "${mod}+q" = "kill";
 
@@ -147,6 +148,7 @@ in
 
     extraConfig = ''
       for_window [class="discord"] move scratchpad; scratchpad show
+      for_window [class="URxvt" instance="yazi"] floating enable
     '';
   };
 }

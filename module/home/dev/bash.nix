@@ -18,6 +18,7 @@ in
     enable = true;
     shellAliases = {
       ll = "ls -la";
+      rem = "reminders";
       update = "sudo nixos-rebuild switch --flake .#loaner";
       screenshot = "maim -s | xclip -selection clipboard -t image/png";
       fv = "vim \$(fzf)";

@@ -6,7 +6,7 @@
     settings = {
       user = {
         name = "Yotam Dubiner";
-        email = "yotam@dubiner.org";
+        email = "dubiner2@illinois.edu";
       };
     };
   };

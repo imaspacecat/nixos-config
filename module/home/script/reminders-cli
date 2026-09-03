@@ -1,0 +1,296 @@
+#!/usr/bin/env python3
+import argparse
+import datetime
+import hashlib
+import json
+import os
+import pathlib
+import re
+import subprocess
+import sys
+import tempfile
+
+reminder_file = pathlib.Path(
+    os.environ.get("REMINDERS_FILE", pathlib.Path.home() / ".config/reminders/reminders.json")
+)
+weekdays = {
+    "mon": "mon",
+    "monday": "mon",
+    "tue": "tue",
+    "tuesday": "tue",
+    "wed": "wed",
+    "wednesday": "wed",
+    "thu": "thu",
+    "thursday": "thu",
+    "fri": "fri",
+    "friday": "fri",
+    "sat": "sat",
+    "saturday": "sat",
+    "sun": "sun",
+    "sunday": "sun",
+}
+
+
+def load_reminders():
+    if not reminder_file.exists():
+        return {"reminders": []}
+    try:
+        with reminder_file.open(encoding="utf-8") as source:
+            data = json.load(source)
+    except (OSError, json.JSONDecodeError) as error:
+        raise SystemExit(f"reminders: could not read {reminder_file}: {error}")
+    if not isinstance(data, dict) or not isinstance(data.get("reminders"), list):
+        raise SystemExit(f"reminders: invalid format in {reminder_file}")
+    return data
+
+
+def save_reminders(data):
+    reminder_file.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(
+        mode="w", encoding="utf-8", dir=reminder_file.parent, delete=False
+    ) as target:
+        json.dump(data, target, indent=2)
+        target.write("\n")
+        temporary_file = pathlib.Path(target.name)
+    os.replace(temporary_file, reminder_file)
+
+
+def describe_schedule(reminder):
+    frequency = reminder.get("frequency")
+    time = reminder.get("time", "?")
+    if frequency == "daily":
+        return f"every day at {time}"
+    if frequency == "weekdays":
+        return f"every weekday at {time}"
+    if frequency == "weekly":
+        return f"every {', '.join(reminder.get('days', []))} at {time}"
+    if frequency == "monthly":
+        return f"every month on {', '.join(reminder.get('days', []))} at {time}"
+    if frequency == "once":
+        return f"once on {reminder.get('date', '?')} at {time}"
+    if frequency == "interval":
+        return f"every {reminder.get('interval_minutes', '?')}m from {reminder.get('date', '?')} {time}"
+    return f"{frequency or '?'} at {time}"
+
+
+def list_reminders(_args):
+    reminders = load_reminders()["reminders"]
+    if not reminders:
+        print("No reminders.")
+        return
+    for number, reminder in enumerate(reminders, start=1):
+        state = "enabled" if reminder.get("enabled", True) else "disabled"
+        print(f"{number}. {reminder.get('title', '<untitled>')} [{state}; {describe_schedule(reminder)}]")
+
+
+def delete_reminder(args):
+    data = load_reminders()
+    if args.identifier < 1 or args.identifier > len(data["reminders"]):
+        raise SystemExit(f"reminders: no reminder with ID {args.identifier}")
+    reminder = data["reminders"].pop(args.identifier - 1)
+    save_reminders(data)
+    print(f"Deleted reminder {args.identifier}: {reminder.get('title', '<untitled>')}.")
+
+
+def parse_duration(value):
+    duration = re.fullmatch(r"(\d+)([mhdw]?)", value.lower())
+    if not duration or int(duration.group(1)) < 1:
+        raise argparse.ArgumentTypeError("must be a positive duration such as 10m, 2h, or 1d")
+    amount = int(duration.group(1))
+    unit = duration.group(2) or "m"
+    return amount * {"m": 1, "h": 60, "d": 1440, "w": 10080}[unit]
+
+
+def parse_time(value):
+    try:
+        return datetime.time.fromisoformat(value).strftime("%H:%M")
+    except ValueError:
+        raise argparse.ArgumentTypeError("must be in HH:MM format")
+
+
+def parse_date(value):
+    try:
+        return datetime.date.fromisoformat(value).isoformat()
+    except ValueError:
+        raise argparse.ArgumentTypeError("must be in YYYY-MM-DD format")
+
+
+def add_reminder(args):
+    if args.in_minutes is not None:
+        if args.at or args.every or args.on:
+            raise SystemExit("reminders: --in cannot be combined with --at, --every, or --on")
+        scheduled = datetime.datetime.now().astimezone() + datetime.timedelta(minutes=args.in_minutes)
+        schedule = {"frequency": "once", "date": scheduled.date().isoformat(), "time": scheduled.strftime("%H:%M")}
+    elif args.every:
+        schedule = recurring_schedule(args)
+    elif args.on:
+        if not args.at:
+            raise SystemExit("reminders: --on requires --at")
+        schedule = {"frequency": "once", "date": parse_date(args.on), "time": args.at}
+    else:
+        raise SystemExit("reminders: specify --in, --every, or --at with --on")
+    reminder = {
+        "enabled": True,
+        "title": args.title,
+        "description": args.description,
+        "urgency": args.urgency,
+        "timeout_seconds": args.timeout,
+        **schedule,
+    }
+    data = load_reminders()
+    data["reminders"].append(reminder)
+    save_reminders(data)
+    print(f"Added reminder {args.title!r}: {describe_schedule(reminder)}.")
+
+
+def recurring_schedule(args):
+    if re.fullmatch(r"\d+[mhdw]?", args.every.lower()):
+        start = interval_start(args)
+        return {
+            "frequency": "interval",
+            "date": start.date().isoformat(),
+            "time": start.strftime("%H:%M"),
+            "interval_minutes": parse_duration(args.every),
+        }
+    if args.every == "day":
+        if not args.at or args.on:
+            raise SystemExit("reminders: --every day requires --at and does not use --on")
+        return {"frequency": "daily", "time": args.at}
+    if args.every == "weekday":
+        if not args.at or args.on:
+            raise SystemExit("reminders: --every weekday requires --at and does not use --on")
+        return {"frequency": "weekdays", "time": args.at}
+    if args.every == "week":
+        if not args.at or not args.on or args.on.lower() not in weekdays:
+            raise SystemExit("reminders: --every week requires --at and --on MON through SUN")
+        return {"frequency": "weekly", "time": args.at, "days": [weekdays[args.on.lower()]]}
+    if args.every == "month":
+        if not args.at or not args.on or not args.on.isdigit() or not 1 <= int(args.on) <= 31:
+            raise SystemExit("reminders: --every month requires --at and --on 1 through 31")
+        return {"frequency": "monthly", "time": args.at, "days": [args.on]}
+    raise SystemExit("reminders: --every must be a duration such as 25m, day, weekday, week, or month")
+
+
+def interval_start(args):
+    start_date = parse_date(args.on) if args.on else datetime.datetime.now().astimezone().date().isoformat()
+    start_time = args.at or datetime.datetime.now().astimezone().replace(second=0, microsecond=0).strftime("%H:%M")
+    return datetime.datetime.combine(
+        datetime.date.fromisoformat(start_date), datetime.time.fromisoformat(start_time)
+    )
+
+
+def due(reminder, now):
+    frequency = reminder["frequency"]
+    today = now.date()
+    days = reminder.get("days", [])
+    weekday_numbers = {day: number for number, day in enumerate(("mon", "tue", "wed", "thu", "fri", "sat", "sun"))}
+
+    if frequency == "daily":
+        return True
+    if frequency == "weekdays":
+        return today.weekday() < 5
+    if frequency == "weekly":
+        return today.weekday() in {weekday_numbers[day.lower()] for day in days}
+    if frequency == "monthly":
+        return today.day in {int(day) for day in days}
+    if frequency == "once":
+        return today == datetime.date.fromisoformat(reminder["date"])
+    if frequency == "interval":
+        start = datetime.datetime.combine(
+            datetime.date.fromisoformat(reminder["date"]),
+            datetime.time.fromisoformat(reminder["time"]),
+            tzinfo=now.tzinfo,
+        )
+        elapsed = now.replace(second=0, microsecond=0) - start
+        return elapsed.total_seconds() >= 0 and elapsed.total_seconds() % (reminder["interval_minutes"] * 60) == 0
+    raise ValueError(f"unknown frequency: {frequency}")
+
+
+def check_reminders(_args):
+    state_dir = pathlib.Path(
+        os.environ.get("REMINDERS_STATE_DIR", pathlib.Path.home() / ".local/state/reminders")
+    )
+    reminders = load_reminders()["reminders"]
+    now = datetime.datetime.now().astimezone()
+
+    for number, reminder in enumerate(reminders, start=1):
+        if not reminder.get("enabled", True):
+            continue
+        try:
+            time = datetime.time.fromisoformat(reminder["time"])
+            if reminder["frequency"] != "interval" and (now.hour, now.minute) != (time.hour, time.minute):
+                continue
+            if not due(reminder, now):
+                continue
+            urgency = reminder.get("urgency", "normal")
+            timeout = reminder.get("timeout_seconds", 300)
+            if urgency not in {"low", "normal", "critical"} or timeout < 0:
+                raise ValueError("invalid notification settings")
+        except (KeyError, TypeError, ValueError) as error:
+            print(f"reminders: entry {number}: {error}", file=sys.stderr)
+            continue
+
+        identity = json.dumps(reminder, sort_keys=True)
+        state_file = state_dir / f"{hashlib.sha256(identity.encode()).hexdigest()}-{now:%Y-%m-%d-%H:%M}"
+        if state_file.exists():
+            continue
+
+        result = subprocess.run(
+            [
+                "notify-send",
+                "-u",
+                urgency,
+                "-t",
+                str(timeout * 1000),
+                reminder["title"],
+                reminder.get("description", ""),
+            ],
+            check=False,
+        )
+        if result.returncode == 0:
+            state_dir.mkdir(parents=True, exist_ok=True)
+            state_file.touch()
+
+
+arguments = sys.argv[1:]
+if arguments and arguments[0] in {"-l", "-d"}:
+    arguments[0] = {"-l": "list", "-d": "delete"}[arguments[0]]
+elif arguments and arguments[0] not in {"add", "check", "list", "delete", "--help", "-h"}:
+    arguments.insert(0, "add")
+
+parser = argparse.ArgumentParser(
+    prog="reminders",
+    description="With no arguments, list reminders. A title adds a reminder.",
+    epilog="""examples:
+  reminders \"Buy milk\" -t 18:00 -e day
+  reminders \"Take a break\" -e 25m
+  reminders \"Leave now\" -i 10m
+  reminders -d 3""",
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+)
+parser.set_defaults(function=list_reminders)
+subparsers = parser.add_subparsers(dest="command")
+
+list_parser = subparsers.add_parser("list", help="list reminders")
+list_parser.set_defaults(function=list_reminders)
+
+check_parser = subparsers.add_parser("check", help=argparse.SUPPRESS)
+check_parser.set_defaults(function=check_reminders)
+
+delete_parser = subparsers.add_parser("delete", help="delete a reminder by ID")
+delete_parser.add_argument("identifier", type=int)
+delete_parser.set_defaults(function=delete_reminder)
+
+add_parser = subparsers.add_parser("add", help="add a reminder")
+add_parser.add_argument("title")
+add_parser.add_argument("-i", "--in", dest="in_minutes", type=parse_duration)
+add_parser.add_argument("-t", "--at", type=parse_time)
+add_parser.add_argument("-e", "--every")
+add_parser.add_argument("-o", "--on")
+add_parser.add_argument("--description", default="")
+add_parser.add_argument("--urgency", choices=["low", "normal", "critical"], default="normal")
+add_parser.add_argument("--timeout", type=int, default=300)
+add_parser.set_defaults(function=add_reminder)
+
+args = parser.parse_args(arguments)
+args.function(args)

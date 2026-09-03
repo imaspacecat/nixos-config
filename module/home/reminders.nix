@@ -4,42 +4,25 @@ let
   reminderDefaults = pkgs.writeText "reminders.json" ''
     {
       "reminders": [
-        {
-          "enabled": true,
-          "title": "Verify GitHub commit email",
-          "description": "Add and verify yotam@dubiner.org in GitHub Settings > Emails for imaspacecat.",
-          "time": "09:00",
-          "frequency": "daily",
-          "urgency": "normal",
-          "timeout_seconds": 300
-        },
-        {
-          "enabled": true,
-          "title": "Call Costco",
-          "description": "Call Costco.",
-          "time": "18:17",
-          "frequency": "interval",
-          "date": "2026-09-01",
-          "interval_minutes": 10,
-          "urgency": "normal",
-          "timeout_seconds": 300
-        }
+
       ]
     }
   '';
 
-  reminderCheck = pkgs.writeShellApplication {
-    name = "reminder-check";
+  reminderCli = pkgs.writeShellApplication {
+    name = "reminders";
     runtimeInputs = with pkgs; [
       libnotify
       python3
     ];
     text = ''
-      exec python3 ${./script/reminders}
+      exec python3 ${./script/reminders-cli} "$@"
     '';
   };
 in
 {
+  home.packages = [ reminderCli ];
+
   home.activation.createRemindersFile = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     reminder_dir="$HOME/.config/reminders"
     reminder_file="$reminder_dir/reminders.json"
@@ -57,7 +40,7 @@ in
     };
     Service = {
       Type = "oneshot";
-      ExecStart = "${reminderCheck}/bin/reminder-check";
+      ExecStart = "${reminderCli}/bin/reminders check";
     };
   };
 
