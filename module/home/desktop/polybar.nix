@@ -89,7 +89,7 @@ in
         height = "20px";
         radius = 0;
         fixed-center = true;
-        background = "#222222";
+        background = "#E6222222";
         foreground = "#ffffff";
         font-0 = "JetBrainsMono Nerd Font:size=10;2";
         line-size = 2;

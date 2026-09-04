@@ -15,6 +15,7 @@
     ripgrep
     fd
     file
+    feh
     discord-ptb
     usbutils
   ];

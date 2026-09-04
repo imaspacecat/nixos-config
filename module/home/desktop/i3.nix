@@ -76,7 +76,61 @@ in
       terminal = "alacritty";
       modifier = "Mod4";
 
+      fonts = {
+        names = [ "JetBrainsMono Nerd Font" ];
+        size = 10.0;
+      };
+
+      window = {
+        border = 2;
+        titlebar = true;
+      };
+
+      colors = {
+        background = "#222222";
+        focused = {
+          border = "#444444";
+          background = "#444444";
+          text = "#ffffff";
+          indicator = "#ffffff";
+          childBorder = "#444444";
+        };
+        focusedInactive = {
+          border = "#444444";
+          background = "#222222";
+          text = "#ffffff";
+          indicator = "#222222";
+          childBorder = "#444444";
+        };
+        unfocused = {
+          border = "#444444";
+          background = "#222222";
+          text = "#ffffff";
+          indicator = "#222222";
+          childBorder = "#444444";
+        };
+        urgent = {
+          border = "#ffffff";
+          background = "#444444";
+          text = "#ffffff";
+          indicator = "#ffffff";
+          childBorder = "#ffffff";
+        };
+        placeholder = {
+          border = "#444444";
+          background = "#222222";
+          text = "#ffffff";
+          indicator = "#222222";
+          childBorder = "#444444";
+        };
+      };
+
       startup = [
+        {
+          command = "feh --bg-max /home/spacecat/Downloads/totoro2.webp";
+          always = true;
+          notification = false;
+        }
         {
           command = "systemctl --user restart polybar.service";
           always = true;
