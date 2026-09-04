@@ -1,6 +1,13 @@
 { config, ... }:
 
 {
+  networking.nameservers = [
+    "1.1.1.1"
+    "1.0.0.1"
+  ];
+
+  networking.networkmanager.dns = "none";
+
   networking.networkmanager.ensureProfiles = {
     environmentFiles = [ config.sops.secrets."networks".path ];
 
@@ -33,14 +40,23 @@
 
       apartment = {
         connection = {
-          id = "Wi-Fi connection 1";
-          uuid = "7fe9defb-745a-40a6-ab7a-123df5bd1caa";
+          id = "508CLRK-U411";
+          uuid = "0b5e5127-f7c8-4c68-ab53-57cd2ad5d4d6";
           type = "wifi";
           autoconnect = "true";
         };
         wifi = {
           mode = "infrastructure";
           ssid = "508CLRK-U411";
+        };
+        wifi-security = {
+          key-mgmt = "wpa-psk";
+          psk = "$apartment_password";
+        };
+        ipv4 = {
+          method = "auto";
+          dns = "1.1.1.1;1.0.0.1;";
+          ignore-auto-dns = "true";
         };
         ipv6 = {
           method = "disabled";
